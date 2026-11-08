@@ -66,10 +66,12 @@ if target_col is None:
     st.stop()
 
 X_eval = df_eval.drop(columns=[c for c in ['stab', 'stabf', 'target'] if c in df_eval.columns])
-if df_eval[target_col].dtype == object:
-    y_eval = (df_eval[target_col] == 'unstable').astype(int)
+# Robust target conversion for any string or numeric format
+mapped_y = df_eval[target_col].astype(str).str.strip().str.lower().map({'unstable': 1, 'stable': 0})
+if not mapped_y.isna().all():
+    y_eval = mapped_y.fillna(0).astype(int)
 else:
-    y_eval = df_eval[target_col].astype(int)
+    y_eval = pd.to_numeric(df_eval[target_col], errors='coerce').fillna(0).astype(int)
 
 # Scale features for distance/margin-based models
 if selected_model_name in ["Logistic Regression", "KNN", "Support Vector Machine"]:
